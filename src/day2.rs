@@ -123,7 +123,7 @@ impl Part2Game {
         let player_move = Move::from_result(self.game_result, self.elf_move);
 
         self.game_result.score() + player_move.score()
-}
+    }
 }
 
 pub fn parse_part2(input: &str) -> Vec<Part2Game> {
