@@ -1,8 +1,7 @@
-use aoc_runner_derive::{aoc, aoc_generator};
+use aoc_runner_derive::aoc;
 use itertools::Itertools;
 
-#[aoc_generator(day1)]
-pub fn input_generator(input: &str) -> Vec<u32> {
+pub fn parse_input(input: &str) -> impl Iterator<Item = u32> + '_ {
     fn parse_calories_block(input: &str) -> u32 {
         input
             .split("\n")
@@ -12,22 +11,46 @@ pub fn input_generator(input: &str) -> Vec<u32> {
 
     input.split("\n\n")
         .map(parse_calories_block)
-        .collect()
 }
 
 #[aoc(day1, part1)]
-pub fn solve_part1(all_calories: &[u32]) -> u32 {
-    *all_calories.iter()
+pub fn solve_part1(input: &str) -> u32 {
+    let all_calories = parse_input(input);
+
+    all_calories
         .max()
         .unwrap()
 
 }
 
-#[aoc(day1, part2)]
-pub fn solve_part2(all_calories: &[u32]) -> u32 {
-    all_calories.iter()
+#[aoc(day1, part2, Sort)]
+pub fn solve_part2_sort(input: &str) -> u32 {
+    let all_calories = parse_input(input);
+
+    all_calories
         .sorted()
         .rev()
         .take(3)
+        .sum()
+}
+
+#[aoc(day1, part2, Fold)]
+pub fn solve_part2_fold(input: &str) -> u32 {
+    let all_calories = parse_input(input);
+
+    let three_biggest_calories = all_calories
+        .fold([0, 0, 0], |mut acc, calories| {
+            for existing_max in &mut acc {
+                if calories > *existing_max {
+                    *existing_max = calories;
+                    break;
+                }
+            }
+
+            acc
+        });
+
+    three_biggest_calories
+        .iter()
         .sum()
 }

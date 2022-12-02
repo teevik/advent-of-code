@@ -1,4 +1,4 @@
-use aoc_runner_derive::{aoc};
+use aoc_runner_derive::aoc;
 
 #[derive(Clone, Copy)]
 pub enum GameResult {
@@ -17,7 +17,7 @@ impl GameResult {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Move {
     Rock,
     Paper,
@@ -25,31 +25,33 @@ pub enum Move {
 }
 
 impl Move {
-    pub fn calculate_result(self, other_move: Move) -> GameResult {
-        match (other_move, self) {
-            (Move::Rock, Move::Scissors) => GameResult::Loss,
-            (Move::Paper, Move::Rock) => GameResult::Loss,
-            (Move::Scissors, Move::Paper) => GameResult::Loss,
-            (Move::Rock, Move::Rock) => GameResult::Draw,
-            (Move::Paper, Move::Paper) => GameResult::Draw,
-            (Move::Scissors, Move::Scissors) => GameResult::Draw,
-            (Move::Rock, Move::Paper) => GameResult::Win,
-            (Move::Paper, Move::Scissors) => GameResult::Win,
-            (Move::Scissors, Move::Rock) => GameResult::Win,
+    fn wins_against(self) -> Move {
+        match self {
+            Move::Rock => Move::Scissors,
+            Move::Paper => Move::Rock,
+            Move::Scissors => Move::Paper,
         }
     }
 
+    fn loses_to(self) -> Move {
+        match self {
+            Move::Rock => Move::Paper,
+            Move::Paper => Move::Scissors,
+            Move::Scissors => Move::Rock,
+        }
+    }
+
+    pub fn calculate_result(self, other_move: Move) -> GameResult {
+        if self == other_move { GameResult::Draw }
+        else if self.loses_to() == other_move { GameResult::Loss }
+        else { GameResult::Win }
+    }
+
     pub fn from_result(result: GameResult, other_move: Move) -> Move {
-        match (other_move, result) {
-            (Move::Rock, GameResult::Loss) => Move::Scissors,
-            (Move::Paper, GameResult::Loss) => Move::Rock,
-            (Move::Scissors, GameResult::Loss) => Move::Paper,
-            (Move::Rock, GameResult::Draw) => Move::Rock,
-            (Move::Paper, GameResult::Draw) => Move::Paper,
-            (Move::Scissors, GameResult::Draw) => Move::Scissors,
-            (Move::Rock, GameResult::Win) => Move::Paper,
-            (Move::Paper, GameResult::Win) => Move::Scissors,
-            (Move::Scissors, GameResult::Win) => Move::Rock,
+        match result {
+            GameResult::Loss => other_move.wins_against(),
+            GameResult::Draw => other_move,
+            GameResult::Win => other_move.loses_to(),
         }
     }
 
@@ -75,7 +77,7 @@ impl Part1Game {
     }
 }
 
-pub fn parse_part1(input: &str) -> Vec<Part1Game> {
+pub fn parse_part1(input: &str) -> impl Iterator<Item = Part1Game> + '_ {
     fn parse_line(input: &str) -> Part1Game {
         let mut chars = input.split(" ");
 
@@ -101,15 +103,14 @@ pub fn parse_part1(input: &str) -> Vec<Part1Game> {
 
     input.split("\n")
         .map(parse_line)
-        .collect()
 }
 
 #[aoc(day2, part1)]
 pub fn solve_part1(input: &str) -> u32 {
     let games = parse_part1(input);
 
-    games.iter()
-        .map(Part1Game::score)
+    games
+        .map(|game| game.score())
         .sum()
 }
 
@@ -126,7 +127,7 @@ impl Part2Game {
     }
 }
 
-pub fn parse_part2(input: &str) -> Vec<Part2Game> {
+pub fn parse_part2(input: &str) -> impl Iterator<Item = Part2Game> + '_ {
     fn parse_line(input: &str) -> Part2Game {
         let mut chars = input.split(" ");
 
@@ -152,14 +153,13 @@ pub fn parse_part2(input: &str) -> Vec<Part2Game> {
 
     input.split("\n")
         .map(parse_line)
-        .collect()
 }
 
 #[aoc(day2, part2)]
 pub fn solve_part2(input: &str) -> u32 {
     let games = parse_part2(input);
 
-    games.iter()
-        .map(Part2Game::score)
+    games
+        .map(|game| game.score())
         .sum()
 }
