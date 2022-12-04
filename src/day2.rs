@@ -1,4 +1,6 @@
+use anyhow::{Result, Context};
 use aoc_runner_derive::aoc;
+use itertools::Itertools;
 
 #[derive(Clone, Copy)]
 pub enum GameResult {
@@ -77,28 +79,28 @@ impl Part1Game {
     }
 }
 
-pub fn parse_part1(input: &str) -> impl Iterator<Item = Part1Game> + '_ {
-    fn parse_line(input: &str) -> Part1Game {
-        let mut chars = input.split(" ");
+pub fn parse_part1(input: &str) -> impl Iterator<Item = Result<Part1Game>> + '_{
+    fn parse_line(input: &str) -> Result<Part1Game> {
+        let (char1, char2) = input.split_once(' ').context("Parsing error")?;
 
-        let elf_move = match chars.next().unwrap() {
+        let elf_move = match char1 {
             "A" => Move::Rock,
             "B" => Move::Paper,
             "C" => Move::Scissors,
             _ => panic!()
         };
 
-        let player_move = match chars.next().unwrap() {
+        let player_move = match char2 {
             "X" => Move::Rock,
             "Y" => Move::Paper,
             "Z" => Move::Scissors,
             _ => panic!()
         };
 
-        Part1Game {
+        Ok(Part1Game {
             elf_move,
             player_move
-        }
+        })
     }
 
     input.split("\n")
@@ -106,11 +108,11 @@ pub fn parse_part1(input: &str) -> impl Iterator<Item = Part1Game> + '_ {
 }
 
 #[aoc(day2, part1)]
-pub fn solve_part1(input: &str) -> u32 {
+pub fn solve_part1(input: &str) -> Result<u32> {
     let games = parse_part1(input);
 
     games
-        .map(|game| game.score())
+        .map_ok(|game| game.score())
         .sum()
 }
 
@@ -127,28 +129,28 @@ impl Part2Game {
     }
 }
 
-pub fn parse_part2(input: &str) -> impl Iterator<Item = Part2Game> + '_ {
-    fn parse_line(input: &str) -> Part2Game {
-        let mut chars = input.split(" ");
+pub fn parse_part2(input: &str) -> impl Iterator<Item = Result<Part2Game>> + '_ {
+    fn parse_line(input: &str) -> Result<Part2Game> {
+        let (char1, char2) = input.split_once(' ').context("Parsing error")?;
 
-        let elf_move = match chars.next().unwrap() {
+        let elf_move = match char1 {
             "A" => Move::Rock,
             "B" => Move::Paper,
             "C" => Move::Scissors,
             _ => panic!()
         };
 
-        let game_result = match chars.next().unwrap() {
+        let game_result = match char2 {
             "X" => GameResult::Loss,
             "Y" => GameResult::Draw,
             "Z" => GameResult::Win,
             _ => panic!()
         };
 
-        Part2Game {
+        Ok(Part2Game {
             elf_move,
             game_result
-        }
+        })
     }
 
     input.split("\n")
@@ -156,10 +158,10 @@ pub fn parse_part2(input: &str) -> impl Iterator<Item = Part2Game> + '_ {
 }
 
 #[aoc(day2, part2)]
-pub fn solve_part2(input: &str) -> u32 {
+pub fn solve_part2(input: &str) -> Result<u32> {
     let games = parse_part2(input);
 
     games
-        .map(|game| game.score())
+        .map_ok(|game| game.score())
         .sum()
 }

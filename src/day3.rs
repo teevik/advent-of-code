@@ -1,5 +1,7 @@
+use anyhow::{Result, Context};
 use aoc_runner_derive::aoc;
 use byte_set::ByteSet;
+use itertools::Itertools;
 
 fn get_score(character: u8) -> u32 {
     if character <= 90 {
@@ -33,10 +35,10 @@ pub fn solve_part1(input: &str) -> u32 {
 }
 
 #[aoc(day3, part2)]
-pub fn solve_part2(input: &str) -> u32 {
+pub fn solve_part2(input: &str) -> Result<u32> {
     input.lines()
         .array_chunks::<3>()
-        .map(|chunk| intersection(chunk).first().unwrap())
-        .map(|character| get_score(character))
+        .map(|chunk| intersection(chunk).first().context("Parsing error"))
+        .map_ok(|character| get_score(character))
         .sum()
 }
