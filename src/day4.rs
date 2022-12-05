@@ -26,7 +26,7 @@ impl ElfPair {
 }
 
 pub fn parse_range(range: &str) -> Result<RangeInclusive<i32>> {
-    let (from, to) = range.split_once(',').context("Parsing error")?;
+    let (from, to) = range.split_once('-').context("Parsing error")?;
     let (from, to) = (from.parse::<i32>()?, to.parse::<i32>()?);
 
     Ok(from ..= to)
@@ -45,7 +45,7 @@ pub fn parse_line(line: &str) -> Result<ElfPair> {
 }
 
 #[aoc(day4, part1)]
-pub fn solve_part1(input: &str) -> Result<i32> {
+pub fn solve_part1(input: &str) -> Result<u32> {
     let mut count = 0;
 
     for line in input.lines() {
@@ -58,7 +58,7 @@ pub fn solve_part1(input: &str) -> Result<i32> {
 }
 
 #[aoc(day4, part2)]
-pub fn solve_part2(input: &str) -> Result<usize> {    
+pub fn solve_part2(input: &str) -> Result<u32> {    
     let mut count = 0;
 
     for line in input.lines() {
