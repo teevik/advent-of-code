@@ -1,6 +1,5 @@
+use anyhow::{Context, Result};
 use std::array;
-
-use anyhow::{Result, Context};
 
 pub trait IteratorHelpers: Iterator {
     fn collect_array<const N: usize>(mut self) -> Option<[Self::Item; N]>
