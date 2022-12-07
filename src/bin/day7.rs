@@ -27,8 +27,7 @@ impl<'a> Directories<'a> {
         }
     }
 
-    pub fn insert(&mut self, path: &[&'a str], files_size: u64) {
-        dbg!(path);
+    pub fn add_files_size(&mut self, path: &[&'a str], files_size: u64) {
         let mut parent_directory_key = self.root_directory;
 
         let directory_size = self
@@ -46,14 +45,7 @@ impl<'a> Directories<'a> {
                 directory.sub_directories.get(path_part).copied()
             };
 
-            let directory_key =
-                directory_key.unwrap_or_else(|| self.directories.insert(Default::default()));
-
-            self.directories
-                .get_mut(parent_directory_key)
-                .unwrap()
-                .sub_directories
-                .insert(path_part, directory_key);
+            let directory_key = directory_key.unwrap();
 
             let directory_size = self
                 .directory_sizes
@@ -65,7 +57,7 @@ impl<'a> Directories<'a> {
         }
     }
 
-    pub fn update_price() {}
+    pub fn insert(path: &[&'a str]) {}
 }
 
 #[derive(Default, Debug)]
