@@ -2,7 +2,6 @@
 #![feature(result_flattening)]
 #![feature(fn_traits)]
 
-use std::fmt::Debug;
 use std::time::Instant;
 
 pub mod iterator_helpers;
