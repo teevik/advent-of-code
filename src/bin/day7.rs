@@ -3,45 +3,81 @@
 
 use advent_of_code::execution_time;
 use anyhow::{Context, Result};
+use slotmap::{new_key_type, SecondaryMap, SlotMap};
 use std::collections::HashMap;
 
-#[derive(Default, Debug)]
-struct Directory {
-    pub sub_directories: HashMap<String, Directory>,
-    pub files_size: u64,
+new_key_type! { struct DirectoryKey; }
+
+#[derive(Debug)]
+struct Directories<'a> {
+    directories: SlotMap<DirectoryKey, Directory<'a>>,
+    root_directory: DirectoryKey,
+    directory_sizes: SecondaryMap<DirectoryKey, u64>,
 }
 
-impl Directory {
-    pub fn entry(&mut self, path: &[String]) -> &mut Directory {
-        let mut directory = self;
+impl<'a> Directories<'a> {
+    pub fn new() -> Self {
+        let mut directories = SlotMap::with_key();
+        let root_directory = directories.insert(Directory::default());
 
-        for path_part in path {
-            directory = directory
-                .sub_directories
-                .raw_entry_mut()
-                .from_key(path_part)
-                .or_insert_with(|| (path_part.clone(), Default::default()))
-                .1;
+        Self {
+            directories,
+            root_directory,
+            directory_sizes: Default::default(),
         }
-
-        directory
     }
 
-    pub fn total_size(&self) -> u64 {
-        self.files_size
-            + self
+    pub fn insert(&mut self, path: &[&'a str], files_size: u64) {
+        dbg!(path);
+        let mut parent_directory_key = self.root_directory;
+
+        let directory_size = self
+            .directory_sizes
+            .entry(parent_directory_key)
+            .unwrap()
+            .or_default();
+
+        *directory_size += files_size;
+
+        for &path_part in path {
+            let directory_key = {
+                let directory = self.directories.get_mut(parent_directory_key).unwrap();
+
+                directory.sub_directories.get(path_part).copied()
+            };
+
+            let directory_key =
+                directory_key.unwrap_or_else(|| self.directories.insert(Default::default()));
+
+            self.directories
+                .get_mut(parent_directory_key)
+                .unwrap()
                 .sub_directories
-                .values()
-                .map(|directory| directory.total_size())
-                .sum::<u64>()
+                .insert(path_part, directory_key);
+
+            let directory_size = self
+                .directory_sizes
+                .entry(directory_key)
+                .unwrap()
+                .or_default();
+
+            *directory_size += files_size;
+        }
     }
+
+    pub fn update_price() {}
+}
+
+#[derive(Default, Debug)]
+struct Directory<'a> {
+    pub sub_directories: HashMap<&'a str, DirectoryKey>,
 }
 
 pub fn solve_part1(input: &str) -> Result<u64> {
     let mut lines = input.lines().peekable();
 
     let mut path = Vec::new();
-    let mut root_directory = Directory::default();
+    let mut directories = Directories::new();
 
     while lines.peek().is_some() {
         let line = lines.next().unwrap();
@@ -55,7 +91,7 @@ pub fn solve_part1(input: &str) -> Result<u64> {
                     path.pop();
                 }
                 move_to => {
-                    path.push(move_to.to_string());
+                    path.push(move_to);
                 }
             }
         } else if line.strip_prefix("$ ls").is_some() {
@@ -75,25 +111,17 @@ pub fn solve_part1(input: &str) -> Result<u64> {
                 files_size += size;
             }
 
-            root_directory.entry(&path).files_size = files_size;
+            directories.insert(&path, files_size);
         }
     }
 
-    fn find_size_recursively(directory: &Directory) -> u64 {
-        let sub_directory_values = directory
-            .sub_directories
-            .values()
-            .map(|directory| find_size_recursively(directory))
-            .sum::<u64>();
+    dbg!(&directories);
 
-        let self_size = directory.total_size();
-        let self_size = if self_size <= 100000 { self_size } else { 0 };
-
-        self_size + sub_directory_values
-    }
-
-    dbg!(&root_directory);
-    let result = find_size_recursively(&root_directory);
+    let result = directories
+        .directory_sizes
+        .values()
+        .filter(|&&directory_size| directory_size <= 100000)
+        .sum();
 
     Ok(result)
 }
