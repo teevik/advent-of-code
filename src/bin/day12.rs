@@ -1,25 +1,24 @@
 use advent_of_code::execution_time;
-use glam::IVec2;
 use ndarray::Array2;
 use pathfinding::prelude::dijkstra;
 use rayon::prelude::*;
+use vek::Vec2;
 
 type Elevations = Array2<u8>;
-type Position = (usize, usize);
 
 struct ParseResult {
     elevations: Elevations,
-    trail_starts: Vec<Position>,
-    start: Position,
-    end: Position,
+    trail_starts: Vec<Vec2<usize>>,
+    start: Vec2<usize>,
+    end: Vec2<usize>,
 }
 
 fn parse_input(input: &str) -> ParseResult {
     let width = input.lines().next().unwrap().len();
     let height = input.lines().count();
 
-    let mut start = (0, 0);
-    let mut end = (0, 0);
+    let mut start = Vec2::default();
+    let mut end = Vec2::default();
 
     let mut elevations = Array2::default((width, height));
     let mut trail_starts = Vec::new();
@@ -28,15 +27,15 @@ fn parse_input(input: &str) -> ParseResult {
         for (x, mut elevation) in line.bytes().enumerate() {
             match elevation {
                 b'a' => {
-                    trail_starts.push((x, y));
+                    trail_starts.push(Vec2::new(x, y));
                 }
                 b'S' => {
                     elevation = b'a';
-                    start = (x, y);
+                    start = Vec2::new(x, y);
                 }
                 b'E' => {
                     elevation = b'z';
-                    end = (x, y);
+                    end = Vec2::new(x, y);
                 }
                 _ => {}
             }
@@ -53,36 +52,38 @@ fn parse_input(input: &str) -> ParseResult {
     }
 }
 
-fn is_in_bounds(bounds: Position, position: IVec2) -> Option<Position> {
+fn is_in_bounds(bounds: Vec2<usize>, position: Vec2<i32>) -> Option<Vec2<usize>> {
     (position.x >= 0
-        && position.x < bounds.0 as i32
+        && position.x < bounds.x as i32
         && position.y >= 0
-        && position.y < bounds.1 as i32)
-        .then(|| (position.x as usize, position.y as usize))
+        && position.y < bounds.y as i32)
+        .then(|| (position.as_()))
 }
 
-fn find_shortest_path(start: Position, end: Position, elevations: &Elevations) -> Option<u32> {
-    let bounds = elevations.dim();
+fn find_shortest_path(
+    start: Vec2<usize>,
+    end: Vec2<usize>,
+    elevations: &Elevations,
+) -> Option<u32> {
+    let bounds = Vec2::from(elevations.dim());
 
     let (_, steps) = dijkstra(
         &start,
-        |&(x, y)| {
-            let elevations = elevations.clone();
-            let position = IVec2::new(x as i32, y as i32);
-            let elevation = elevations[(x, y)];
+        |&position| {
+            let elevation = elevations[position.into_tuple()];
 
-            [
-                IVec2::new(0, -1),
-                IVec2::new(1, 0),
-                IVec2::new(0, 1),
-                IVec2::new(-1, 0),
-            ]
-            .into_iter()
-            .flat_map(move |neighbor_offset| {
-                let neighbor_position = position + neighbor_offset;
+            const NEIGHBOR_OFFSETS: [Vec2<i32>; 4] = [
+                Vec2::new(0, -1),
+                Vec2::new(1, 0),
+                Vec2::new(0, 1),
+                Vec2::new(-1, 0),
+            ];
+
+            NEIGHBOR_OFFSETS.iter().flat_map(move |&neighbor_offset| {
+                let neighbor_position = position.as_::<i32>() + neighbor_offset;
 
                 is_in_bounds(bounds, neighbor_position).and_then(|neighbor_position| {
-                    let neighbor_elevation = (&elevations)[neighbor_position];
+                    let neighbor_elevation = elevations[neighbor_position.into_tuple()];
 
                     let can_traverse = elevation + 1 >= neighbor_elevation;
 
