@@ -18,3 +18,5 @@ num = "0.4"
 pathfinding = "4.1"
 rayon = "1.6"
 vek = "0.15"
+extent = "0.5"
+indicatif = { version = "0.17", features = ["rayon"] }
